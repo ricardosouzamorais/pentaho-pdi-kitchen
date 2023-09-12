@@ -88,3 +88,15 @@ jobs:
         run: |
           rm -rf /tmp/.buildx-cache
           mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+
+  publish:
+    runs-on: ubuntu-latest
+    if: ${{ matches(github.ref, 'refs/tags/v[0-9]+\.[0-9]+\.[0-9]+(-RC[0-9]+)') }}
+
+    steps:
+      - name: Set Vars
+        id: vars
+        run: |
+          echo ::set-output name=is_rc::$(echo ${{ github.ref }} | grep -E 'v[0-9]+\.[0-9]+\.[0-9]+-RC[0-9]+') >> $GITHUB_OUTPUT
+          echo ::set-output name=tag_name::$(echo ${{ github.ref }} | sed 's/^refs\/heads\///' | sed 's/^refs\/tags\///') >> $GITHUB_OUTPUT
+        
