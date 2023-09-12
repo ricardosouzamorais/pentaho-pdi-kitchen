@@ -26,9 +26,9 @@ jobs:
       - name: Set Vars
         id: vars
         run: |
-          echo ::set-output name=is_rc::$(echo ${{ github.ref }} | grep -E 'v[0-9]+\.[0-9]+\.[0-9]+-RC[0-9]+') >> $GITHUB_OUTPUT
-          echo ::set-output name=tag_name::$(echo ${{ github.ref }} | sed 's/^refs\/heads\///' | sed 's/^refs\/tags\///') >> $GITHUB_OUTPUT
-
+          ::set-output name=is_rc::$(echo ${{ github.ref }} | grep -E 'v[0-9]+\.[0-9]+\.[0-9]+-RC[0-9]+')
+          ::set-output name=tag_name::$(echo ${{ github.ref }} | sed 's/^refs\/heads\///' | sed 's/^refs\/tags\///')
+          
       - name: Checkout
         uses: actions/checkout@v4
 
