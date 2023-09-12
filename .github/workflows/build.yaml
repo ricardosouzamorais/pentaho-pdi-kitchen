@@ -27,6 +27,7 @@ jobs:
         id: vars
         run: |
           echo ::set-output name=is_rc::$(echo ${{ github.ref }} | grep -E 'v[0-9]+\.[0-9]+\.[0-9]+-RC[0-9]+') >> $GITHUB_OUTPUT
+          echo ::set-output name=tag_name::$(echo ${{ github.ref }} | sed 's/^refs\/heads\///' | sed 's/^refs\/tags\///') >> $GITHUB_OUTPUT
 
       - name: Checkout
         uses: actions/checkout@v4
@@ -48,7 +49,7 @@ jobs:
         with:
           context: .
           file: src/main/docker/Dockerfile
-          tags: pentaho-pdi-kitchen:${{ github.ref }}
+          tags: pentaho-pdi-kitchen:${{ steps.vars.output.tag_name }}
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new
 
@@ -58,7 +59,7 @@ jobs:
         with:
           context: .
           file: src/main/docker/Dockerfile
-          tags: pentaho-pdi-kitchen:${{ github.ref }}
+          tags: pentaho-pdi-kitchen:${{ steps.vars.output.tag_name }}
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new
           outputs: type=docker,dest=/tmp/pentaho-pdi-kitchen.tar
