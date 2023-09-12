@@ -1,0 +1,59 @@
+name: Build Docker Image
+
+on:
+  push:
+    branches:
+      - develop
+      - main
+      
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    inputs:
+      tag_as_latest:
+        description: 'Tag as latest (true/false)'
+        required: false
+        default: false
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      
+      - name: Check if tag is a release candidate
+        id: check-rc-tag
+        run: echo ::set-output name=is_rc::$(echo ${{ github.ref }} | grep -E 'v[0-9]+\.[0-9]+\.[0-9]+-RC[0-9]+')
+
+      - name: Get Tag name
+        id: get-tag-name
+        run: |
+          if [[ ${{ github.ref }} =~ refs/tags/(v[0-9]+\.[0-9]+\.[0-9]+|v[0-9]+\.[0-9]+\.[0-9]+-RC[0-9]+) ]]; then
+            echo "Tag matches pattern: ${{BASH_REMATCH[1]}}"
+            echo "::set-output name=tag_name::${{BASH_REMATCH[1]}}"
+            echo "::set-output name=isValidTag::true"
+          else
+            echo "Tag does not match pattern"
+            echo "::set-output name=isValidTag::false"
+          fi
+
+      - name: Build Docker Image
+        run: docker build -t pentaho-pdi-kitchen:${{ steps.get-tag-name.outputs.tag_name }} .
+
+      - name: Login to Docker Hub
+        if: steps.get-tag-name.outputs.isValidTag == 'true'
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Push Docker Image
+        if: steps.get-tag-name.outputs.isValidTag == 'true'
+        run: docker push your-docker-image-name:${{ steps.get-tag-name.outputs.tag_name }} .
+
+      - name: Push Docker Image Latest Tag
+        if: steps.check-rc-tag.outputs.is_rc == '' && inputs.tag_as_latest == 'true'
+        run: docker push your-docker-image-name:${{ steps.get-tag-name.outputs.tag_name }} .
+
+        - name: Logout from Docker Hub
+        if: steps.get-tag-name.outputs.isValidTag == 'true'
+        run: docker logout
