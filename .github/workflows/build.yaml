@@ -29,44 +29,14 @@ jobs:
           echo ::set-output name=tag::$(${GITHUB_REF#refs/*/}$) >> $GITHUB_OUTPUT
           echo ::set-output name=is_rc::$(echo ${{ github.ref }} | grep -E 'v[0-9]+\.[0-9]+\.[0-9]+-RC[0-9]+') >> $GITHUB_OUTPUT
 
-      - name: Check output
-        env:
-          RELEASE_VERSION: ${{ steps.vars.outputs.tag }}
-        run: |
-          echo $RELEASE_VERSION
-          echo ${{ steps.vars.outputs.tag }}
+      - name: Checkout
+        uses: actions/checkout@v3
 
-      - name: Checkout code
-        uses: actions/checkout@v2
-
-      - name: Check Tag
-        id: get-tag-name
-        run: |
-          if [[ ${{ github.ref }} =~ refs/tags/(v[0-9]+\.[0-9]+\.[0-9]+|v[0-9]+\.[0-9]+\.[0-9]+-RC[0-9]+) ]]; then
-            echo "::set-output name=isValidTag::true"
-          else
-            echo "Tag does not match pattern"
-            echo "::set-output name=isValidTag::false"
-          fi
-
-      - name: Build Docker Image
-        run: docker build -t pentaho-pdi-kitchen:${{ steps.get-tag-name.outputs.tag_name }} .
-
-      - name: Login to Docker Hub
-        if: steps.get-tag-name.outputs.isValidTag == 'true'
-        uses: docker/login-action@v1
+      - name: Build and export
+        uses: docker/build-push-action@v5
         with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          context: .
+          file: src/main/docker/Dockerfile
+          tags: pentaho-pdi-kitchen:latest
+          outputs: type=docker,dest=/tmp/pentaho-pdi-kitchen.tar
 
-      - name: Push Docker Image
-        if: steps.get-tag-name.outputs.isValidTag == 'true'
-        run: docker push your-docker-image-name:${{ steps.get-tag-name.outputs.tag_name }} .
-
-      - name: Push Docker Image Latest Tag
-        if: steps.vars.outputs.is_rc == '' && inputs.tag_as_latest == 'true'
-        run: docker push your-docker-image-name:latest .
-
-      - name: Logout from Docker Hub
-        if: steps.get-tag-name.outputs.isValidTag == 'true'
-        run: docker logout
