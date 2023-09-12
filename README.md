@@ -61,7 +61,6 @@ source ./my-variables.sh
 ```sh
 docker run \
     -it \
-    -e APP_LOG_LEVEL="Detailed" \
     -v $(pwd)/inputs/jobs:/app/jobs \
     -v $(pwd)/inputs/pentaho-extra-libs:/app/pentaho-extra-libs \
     -v $(pwd)/outputs:/app/results \
@@ -71,6 +70,17 @@ docker run \
     "-param:APP_DB_SERVER_PORT=$APP_DB_SERVER_PORT" \
     "-param:APP_DB_USER=$APP_DB_USER" \
     "-param:APP_DB_USER_PWD=$APP_DB_USER_PWD"
+```
+
+**JVM MIN AND MAX MEMORY LEVEL:** The default values for `Xms` and `Xmx` are `128m` and `512m`, respectivelly, and can be redefined by overriding `APP_JVM_MIN_MEMORY` and `APP_JVM_MAX_MEMORY` environment variables as the following example:
+
+```sh
+docker run \
+    -it \
+    -e APP_JVM_MIN_MEMORY="512m" \
+    -e APP_JVM_MAX_MEMORY="1024m" \
+    -v $(pwd)/inputs/jobs:/app/jobs \
+    ...
 ```
 
 **LOG LEVEL:** The log level is defined as `Basic` by default and can be overriden using the `APP_LOG_LEVEL` environment variable as the following example:
