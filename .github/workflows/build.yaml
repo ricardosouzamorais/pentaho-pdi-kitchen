@@ -19,19 +19,26 @@ jobs:
         default: false
 
     steps:
+      - name: Set Vars
+        id: vars
+        run: |
+          echo ::set-output name=tag::$(${GITHUB_REF#refs/*/}$) >> $GITHUB_OUTPUT
+          echo ::set-output name=is_rc::$(echo ${{ github.ref }} | grep -E 'v[0-9]+\.[0-9]+\.[0-9]+-RC[0-9]+') >> $GITHUB_OUTPUT
+
+      - name: Check output
+        env:
+          RELEASE_VERSION: ${{ steps.vars.outputs.tag }}
+        run: |
+          echo $RELEASE_VERSION
+          echo ${{ steps.vars.outputs.tag }}
+
       - name: Checkout code
         uses: actions/checkout@v2
-      
-      - name: Check if tag is a release candidate
-        id: check-rc-tag
-        run: echo ::set-output name=is_rc::$(echo ${{ github.ref }} | grep -E 'v[0-9]+\.[0-9]+\.[0-9]+-RC[0-9]+')
 
-      - name: Get Tag name
+      - name: Check Tag
         id: get-tag-name
         run: |
           if [[ ${{ github.ref }} =~ refs/tags/(v[0-9]+\.[0-9]+\.[0-9]+|v[0-9]+\.[0-9]+\.[0-9]+-RC[0-9]+) ]]; then
-            echo "Tag matches pattern: ${{BASH_REMATCH[1]}}"
-            echo "::set-output name=tag_name::${{BASH_REMATCH[1]}}"
             echo "::set-output name=isValidTag::true"
           else
             echo "Tag does not match pattern"
@@ -53,7 +60,7 @@ jobs:
         run: docker push your-docker-image-name:${{ steps.get-tag-name.outputs.tag_name }} .
 
       - name: Push Docker Image Latest Tag
-        if: steps.check-rc-tag.outputs.is_rc == '' && inputs.tag_as_latest == 'true'
+        if: steps.vars.outputs.is_rc == '' && inputs.tag_as_latest == 'true'
         run: docker push your-docker-image-name:latest .
 
       - name: Logout from Docker Hub
