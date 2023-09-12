@@ -25,3 +25,12 @@ pyenv
 Vagrantfile
 
 *.txt
+*.log
+examples/my-variables.sh
+examples/outputs/data/*
+!examples/outputs/data/.gitkeep
+examples/outputs/logs/*
+!examples/outputs/logs/.gitkeep
+!examples/outputs/logs/jvm
+examples/outputs/logs/jvm/*
+!examples/outputs/logs/jvm/.gitkeep

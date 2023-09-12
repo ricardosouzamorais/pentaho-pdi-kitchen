@@ -3,3 +3,5 @@ README.md
 *.log
 *.txt
 *.zip
+examples
+.github/*
