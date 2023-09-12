@@ -43,3 +43,8 @@ jobs:
           tags: pentaho-pdi-kitchen:latest
           outputs: type=docker,dest=/tmp/pentaho-pdi-kitchen.tar
 
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: pentaho-pdi-kitchen-image
+          path: /tmp/pentaho-pdi-kitchen.tar
