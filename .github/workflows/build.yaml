@@ -1,6 +1,16 @@
 name: Build Docker Image
 
 on:
+  workflow_dispatch:
+    inputs:
+      tag_as_latest:
+        type: choice
+        description: 'Tag as latest (true/false)'
+        required: false
+        default: false
+        options: 
+          - true
+          - false
   push:
     branches:
       - develop
@@ -11,12 +21,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
-    inputs:
-      tag_as_latest:
-        description: 'Tag as latest (true/false)'
-        required: false
-        default: false
 
     steps:
       - name: Set Vars
