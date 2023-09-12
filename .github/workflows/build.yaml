@@ -60,7 +60,8 @@ jobs:
         with:
           context: .
           file: src/main/docker/Dockerfile
-          tags: pentaho-pdi-kitchen:${{ steps.vars.outputs.tag_name }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new
 
@@ -70,7 +71,8 @@ jobs:
         with:
           context: .
           file: src/main/docker/Dockerfile
-          tags: pentaho-pdi-kitchen:${{ steps.vars.outputs.tag_name }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new
           outputs: type=docker,dest=/tmp/pentaho-pdi-kitchen.tar
