@@ -26,7 +26,6 @@ jobs:
       - name: Set Vars
         id: vars
         run: |
-          echo ::set-output name=tag::$(${GITHUB_REF#refs/*/}$) >> $GITHUB_OUTPUT
           echo ::set-output name=is_rc::$(echo ${{ github.ref }} | grep -E 'v[0-9]+\.[0-9]+\.[0-9]+-RC[0-9]+') >> $GITHUB_OUTPUT
 
       - name: Checkout
@@ -49,7 +48,7 @@ jobs:
         with:
           context: .
           file: src/main/docker/Dockerfile
-          tags: pentaho-pdi-kitchen:${{ steps.vars.outputs.tag }}
+          tags: pentaho-pdi-kitchen:${{ github.ref }}
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new
 
@@ -59,21 +58,10 @@ jobs:
         with:
           context: .
           file: src/main/docker/Dockerfile
-          tags: pentaho-pdi-kitchen:${{ steps.vars.outputs.tag }}
+          tags: pentaho-pdi-kitchen:${{ github.ref }}
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new
           outputs: type=docker,dest=/tmp/pentaho-pdi-kitchen.tar
-
-      - name: Build tag and latest, and export
-        if: steps.vars.outputs.is_rc != '' && inputs.tag_as_latest == 'true'
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: src/main/docker/Dockerfile
-          tags: pentaho-pdi-kitchen:${{ steps.vars.outputs.tag }},pentaho-pdi-kitchen:latest
-          cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,dest=/tmp/.buildx-cache-new
-          outputs: type=docker,dest=/tmp/pentaho-pdi-kitchen.tar  
 
       - name: Upload artifact
         if: steps.vars.outputs.is_rc != ''
