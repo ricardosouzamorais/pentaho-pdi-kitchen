@@ -35,6 +35,14 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: Cache Docker layers
+        uses: actions/cache@v3
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
       - name: Build
         if: steps.vars.outputs.is_rc == ''
         uses: docker/build-push-action@v5
@@ -42,6 +50,8 @@ jobs:
           context: .
           file: src/main/docker/Dockerfile
           tags: pentaho-pdi-kitchen:${{ steps.vars.outputs.tag }}
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new
 
       - name: Build and export
         if: steps.vars.outputs.is_rc != ''
@@ -50,6 +60,8 @@ jobs:
           context: .
           file: src/main/docker/Dockerfile
           tags: pentaho-pdi-kitchen:${{ steps.vars.outputs.tag }}
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new
           outputs: type=docker,dest=/tmp/pentaho-pdi-kitchen.tar
 
       - name: Build tag and latest, and export
@@ -58,7 +70,9 @@ jobs:
         with:
           context: .
           file: src/main/docker/Dockerfile
-          tags: pentaho-pdi-kitchen:${{ steps.vars.outputs.tag }}, pentaho-pdi-kitchen:latest
+          tags: pentaho-pdi-kitchen:${{ steps.vars.outputs.tag }},pentaho-pdi-kitchen:latest
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new
           outputs: type=docker,dest=/tmp/pentaho-pdi-kitchen.tar  
 
       - name: Upload artifact
@@ -67,3 +81,8 @@ jobs:
         with:
           name: pentaho-pdi-kitchen-image
           path: /tmp/pentaho-pdi-kitchen.tar
+
+      - name: Move cache avoid forever growth
+        run: |
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
