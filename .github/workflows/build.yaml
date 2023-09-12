@@ -52,8 +52,8 @@ jobs:
 
       - name: Push Docker Image Latest Tag
         if: steps.check-rc-tag.outputs.is_rc == '' && inputs.tag_as_latest == 'true'
-        run: docker push your-docker-image-name:${{ steps.get-tag-name.outputs.tag_name }} .
+        run: docker push your-docker-image-name:latest .
 
-        - name: Logout from Docker Hub
+      - name: Logout from Docker Hub
         if: steps.get-tag-name.outputs.isValidTag == 'true'
         run: docker logout
