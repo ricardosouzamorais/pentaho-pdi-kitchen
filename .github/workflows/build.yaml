@@ -1,0 +1,65 @@
+name: Build Docker Image
+
+on:
+  push:
+    branches:
+      - develop
+      - main
+      - feature-*
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+(-RC-[0-9]+)'
+    pull_request:
+      branches:
+        - 'master'      
+jobs:
+  buildAndPush:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Cache Docker layers
+        uses: actions/cache@v3
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: pentaho-pdi-kitchen
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+
+      - name: Login to DockerHub
+        if: github.event_name != 'pull_request' && startsWith(github.ref, 'refs/tags')
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: src/main/docker/Dockerfile
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new
+          push: ${{ github.event_name != 'pull_request' && startsWith(github.ref, 'refs/tags') }}
+
+      - name: Move cache avoid forever growth
+        run: |
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
